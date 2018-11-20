@@ -69,15 +69,20 @@ def joyCallback(data):
     # Y Button
     beacon_state, beacon_prev = toggle(data.buttons[3], beacon_state, beacon_prev)
 
+
+#Makes the buttons to toggles for better function
 def toggle(val, state, prev):
     if (val == 1) and (not prev):
 	state = not state
     prev = (val == 1)
     return state, prev
 
+
+#Joy subscriber
 def joyInputs():
  
     rospy.Subscriber('joy', Joy, joyCallback)
+
 
 
 def stopCallback(data):
@@ -85,11 +90,13 @@ def stopCallback(data):
     
     coll_detect = data
 
-
+#Collision detect subscriber
 def collDetect():
     
     rospy.Subscriber('lidar_stop', Bool, stopCallback)
 
+
+#Draws the steering, speed boxes and shows the referenced speed value and current speed value
 def drawMeters(s, speed_reference, steering_reference):
     color = (255, 255, 255)
 
@@ -118,6 +125,8 @@ def drawMeters(s, speed_reference, steering_reference):
     pygame.draw.rect(s, color, pos2, 2)
   
     
+
+#Draws boxes for the buttons and fill them in if they are clicked on
 def drawBoxes(s, collision, emergency):
     color = (255, 255, 255)
     reset_color = (0 ,0 ,0)
@@ -135,13 +144,15 @@ def drawBoxes(s, collision, emergency):
 
     #Collision box
     if coll_detect:
+	#Position of the color filling the box if a collision is detected or in later cases 
+	#if the corresponding button is pressed
 	pos = (smargin, tmargin, bside, bside)
         pygame.draw.rect(s, stop_color, pos, 0)
 
     if  coll_override == 1:
 	pos = (smargin, tmargin, bside, bside)
         pygame.draw.rect(s, override_color, pos, 0)
-
+    #Position of the frame of the button boxes
     pos = (smargin, tmargin, bside, bside)
     pygame.draw.rect(s, color, pos, 2)
 
@@ -169,10 +180,12 @@ def drawBoxes(s, collision, emergency):
     pos = (smargin + 3 * bmargin, tmargin, bside, bside)
     pygame.draw.rect(s, color, pos, 2)
 
+#Part of the render function of the text
 def text_objects(text, font):
     textSurface = font.render(text, True, (255,255,255))
     return textSurface, textSurface.get_rect()
 
+#Renders the text of the buttons
 def buttonText():
 
     mboxy = 175
@@ -205,7 +218,10 @@ def main():
     global emergency_state
     global beacon_state
     global handBreak_state
+
     run = True
+
+    #Initialize subscribers and publishers
     joyInputs()
     collDetect()
     p_relay = rospy.Publisher('relay_controll', Int8MultiArray, queue_size=10)
@@ -213,15 +229,22 @@ def main():
     p_joy = rospy.Publisher('joy', Joy, queue_size=10)
     joy_data = Joy()
 
+    #Main loop for the node
     while run:
 	
+
+	#Fills the window with the black background
         s.fill(0)
 
+
+	#A For loop to look for pygame events in the window
         for e in pygame.event.get():
+	    #Shutdown of the node
             if (e.type == pygame.QUIT or
                     e.type == pygame.KEYDOWN and
                     e.key == pygame.K_ESCAPE):
                 run = False
+	    #Makes the buttons clickable and when clicked publishes relevant data
 	    if e.type == pygame.MOUSEBUTTONDOWN :
 		x, y = e.pos
 		if x >= 420 and x <= 570 and y >= 100 and y<= 250:
@@ -249,8 +272,6 @@ def main():
 
 		elif x >= 590 and x <= 740 and y >= 100 and y<= 250:
 		    
-		    del joy_data.buttons[:]
-		    
 		    while len(joy_data.axes) < 8:
 			joy_data.axes.append(0)
 
@@ -263,6 +284,8 @@ def main():
 
 		    del joy_data.buttons[:]
     	
+
+	#Updates the window and all the boxes and text
         drawMeters(s, speed_reference, steering_reference)
 	drawBoxes(s, coll_detect, emergency_state)
 	buttonText()
@@ -273,5 +296,6 @@ def main():
 
 
 if __name__ == '__main__':
+    #Initializing the node for ROS
     rospy.init_node('control_panel', disable_signals=False)
     main()
