@@ -115,6 +115,9 @@ def speedCallback(data):
     global permo_speed
     global permo_steering
 
+    permo_speed = data[0]
+    permo_steering = data[1]
+
 #Draws the steering, speed boxes and shows the referenced speed value and current speed value
 def drawMeters(s, speed_reference, steering_reference, permo_speed, permo_steering):
     color = (255, 255, 255)
@@ -132,11 +135,11 @@ def drawMeters(s, speed_reference, steering_reference, permo_speed, permo_steeri
 
 
     if permo_speed != 0:
-        pos = (rx + 1, ry + rh/2 + 1, rw - 2, (rh/2) * permo_speed)
+        pos = (rx + 1, ry + rh/2 + 1, rw - 2, (rh/4) * permo_speed)
         pygame.draw.rect(s, wv_color, pos, 0)
 
     if permo_steering != 0:
-        pos2 = (rx - 1 * rh/3 + 16 + rh/2,  ry + rh, (rh/4) * permo_steering, rw - 2)
+        pos2 = (rx - 1 * rh/3 + 16 + rh/2,  ry + rh, (rh/6) * permo_steering, rw - 2)
         pygame.draw.rect(s, wv_color, pos2, 0)
 
     if steering_reference != 0:
@@ -178,6 +181,12 @@ def drawBoxes(s, collision, emergency):
 	#if the corresponding button is pressed
 	pos = (smargin, tmargin, bside, bside)
         pygame.draw.rect(s, stop_color, pos, 0)
+
+    if not coll_detect:
+	#Position of the color filling the box if a collision is detected or in later cases 
+	#if the corresponding button is pressed
+	pos = (smargin, tmargin, bside, bside)
+        pygame.draw.rect(s, reset_color, pos, 0)
 
     if  coll_override == 1:
 	pos = (smargin, tmargin, bside, bside)
