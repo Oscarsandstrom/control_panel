@@ -5,7 +5,7 @@ import rospy
 import pygame
 import math
 from sensor_msgs.msg import Joy
-from std_msgs.msg import Bool, Int8MultiArray
+from std_msgs.msg import Bool, Int8MultiArray, Float32MultiArray
 
 # Window variables
 WIDTH = 1600
@@ -15,7 +15,12 @@ FRAMERATE = 60
 
 # Speed variables
 speed_reference = 0
+speed1 = 0
+speed2 = 0
 steering_reference = 0
+
+permo_speed = 0
+permo_steering = 0
 
 # Control variables
 coll_detect = False
@@ -31,7 +36,7 @@ beacon_state = False
 beacon_prev = False
 
 
-# Pygame
+# Pygame initialization s as screen with window dimensions and control panel as window name
 pygame.init()
 s = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Control Panel")
@@ -44,9 +49,13 @@ def joyCallback(data):
     #Axes
     global steering_reference
     global speed_reference
+    global speed1
+    global speed2
 
     steering_reference = data.axes[0]
     speed_reference = (-data.axes[5] + data.axes[2])
+    speed1 = data.axes[2]
+    speed2 = data.axes[5]
 
     #Buttons
     global coll_override
@@ -96,12 +105,23 @@ def collDetect():
     rospy.Subscriber('lidar_stop', Bool, stopCallback)
 
 
+#Actual speed and angle speed subscriber
+def wvOutputs():
+    
+    rospy.Subscriber('vw_estimate', Float32MultiArray, speedCallback)
+
+
+def speedCallback(data):
+    global permo_speed
+    global permo_steering
+
 #Draws the steering, speed boxes and shows the referenced speed value and current speed value
-def drawMeters(s, speed_reference, steering_reference):
+def drawMeters(s, speed_reference, steering_reference, permo_speed, permo_steering):
     color = (255, 255, 255)
 
     speed_color = (0, 0, 255)    
     steering_color = (0, 0, 255)
+    wv_color = (255, 0, 0)
 
     rh = 500
     rw = 150
@@ -109,6 +129,15 @@ def drawMeters(s, speed_reference, steering_reference):
 
     rx = WIDTH - (2 * rw + 2 * (rgap - rw))
     ry = (HEIGHT - rh)/2
+
+
+    if permo_speed != 0:
+        pos = (rx + 1, ry + rh/2 + 1, rw - 2, (rh/2) * permo_speed)
+        pygame.draw.rect(s, wv_color, pos, 0)
+
+    if permo_steering != 0:
+        pos2 = (rx - 1 * rh/3 + 16 + rh/2,  ry + rh, (rh/4) * permo_steering, rw - 2)
+        pygame.draw.rect(s, wv_color, pos2, 0)
 
     if steering_reference != 0:
 	pos2 = ((rx - 1 * rh/3 + 16 + rh/2) + 250 * -steering_reference, ry + rh, 10, rw - 2)
@@ -135,6 +164,7 @@ def drawBoxes(s, collision, emergency):
     override_color = (11, 102, 35)
     beacon_color = (255, 165, 0)
 
+    #pixel coordinates is the window used later when determening the position
     tmargin = 100
     smargin = 250
     bmargin = 170
@@ -224,6 +254,7 @@ def main():
     #Initialize subscribers and publishers
     joyInputs()
     collDetect()
+    wvOutputs()
     p_relay = rospy.Publisher('relay_controll', Int8MultiArray, queue_size=10)
     p_data = Int8MultiArray()
     p_joy = rospy.Publisher('joy', Joy, queue_size=10)
@@ -278,6 +309,11 @@ def main():
 		    while len(joy_data.buttons) < 11:
 			joy_data.buttons.append(0)
 
+		    joy_data.axes[0] = steering_reference
+		    
+		    joy_data.axes[2] = speed1  
+    		    joy_data.axes[5] = speed2
+
 		    joy_data.buttons[7] = 1
 
 		    p_joy.publish(joy_data)
@@ -286,7 +322,7 @@ def main():
     	
 
 	#Updates the window and all the boxes and text
-        drawMeters(s, speed_reference, steering_reference)
+        drawMeters(s, speed_reference, steering_reference, permo_speed, permo_steering)
 	drawBoxes(s, coll_detect, emergency_state)
 	buttonText()
         pygame.display.flip()
