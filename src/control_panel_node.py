@@ -5,6 +5,7 @@ import rospy
 import pygame
 import math
 from sensor_msgs.msg import Joy
+from geometry_msgs.msg import Twist
 from std_msgs.msg import Bool, Int8MultiArray, Float32MultiArray
 
 # Window variables
@@ -18,6 +19,7 @@ speed_reference = 0
 speed1 = 0
 speed2 = 0
 steering_reference = 0
+steering_data = 0
 
 permo_speed = 0
 permo_steering = 0
@@ -46,14 +48,12 @@ clock.tick(FRAMERATE)
 
 
 def joyCallback(data):
-    #Axes
-    global steering_reference
-    global speed_reference
+    #Axes variables for later correctional use
+    global steering_data
     global speed1
     global speed2
 
-    steering_reference = data.axes[0]
-    speed_reference = (-data.axes[5] + data.axes[2])
+    steering_data = data.axes[0]
     speed1 = data.axes[2]
     speed2 = data.axes[5]
 
@@ -97,13 +97,25 @@ def joyInputs():
 def stopCallback(data):
     global coll_detect
     
-    coll_detect = data
+    coll_detect = data.data
 
 #Collision detect subscriber
 def collDetect():
     
     rospy.Subscriber('lidar_stop', Bool, stopCallback)
 
+
+#Subscriber for speed and steering reference
+def references():
+
+    rospy.Subscriber('referens', Twist, refCallback)
+
+def refCallback(data):
+    global steering_reference
+    global speed_reference
+
+    speed_reference = data.linear.x
+    steering_reference = data.angular.z
 
 #Actual speed and angle speed subscriber
 def wvOutputs():
@@ -115,8 +127,8 @@ def speedCallback(data):
     global permo_speed
     global permo_steering
 
-    permo_speed = data[0]
-    permo_steering = data[1]
+    permo_speed = data.data[0]
+    permo_steering = data.data[1]
 
 #Draws the steering, speed boxes and shows the referenced speed value and current speed value
 def drawMeters(s, speed_reference, steering_reference, permo_speed, permo_steering):
@@ -135,11 +147,11 @@ def drawMeters(s, speed_reference, steering_reference, permo_speed, permo_steeri
 
 
     if permo_speed != 0:
-        pos = (rx + 1, ry + rh/2 + 1, rw - 2, (rh/4) * permo_speed)
+        pos = (rx + 1 * rgap + 1, ry - rw + rh/2, rw - 2, (rh/2) * -permo_speed)
         pygame.draw.rect(s, wv_color, pos, 0)
 
     if permo_steering != 0:
-        pos2 = (rx - 1 * rh/3 + 16 + rh/2,  ry + rh, (rh/6) * permo_steering, rw - 2)
+        pos2 = (rx - 1 * rh/3 + 16 + rh/2,  ry + rh, (rh/8) * -permo_steering, rw - 2)
         pygame.draw.rect(s, wv_color, pos2, 0)
 
     if steering_reference != 0:
@@ -147,7 +159,7 @@ def drawMeters(s, speed_reference, steering_reference, permo_speed, permo_steeri
 	pygame.draw.rect(s, steering_color, pos2, 0)
     
     if speed_reference != 0:
-        pos = (rx + 1 * rgap + 1, (ry - rw + rh/2) + 125 * -speed_reference, rw - 2, 10)
+        pos = (rx + 1 * rgap + 1, (ry - rw + rh/2) + 250 * -speed_reference, rw - 2, 10)
         pygame.draw.rect(s, speed_color, pos, 0)
 
 
@@ -181,12 +193,6 @@ def drawBoxes(s, collision, emergency):
 	#if the corresponding button is pressed
 	pos = (smargin, tmargin, bside, bside)
         pygame.draw.rect(s, stop_color, pos, 0)
-
-    if not coll_detect:
-	#Position of the color filling the box if a collision is detected or in later cases 
-	#if the corresponding button is pressed
-	pos = (smargin, tmargin, bside, bside)
-        pygame.draw.rect(s, reset_color, pos, 0)
 
     if  coll_override == 1:
 	pos = (smargin, tmargin, bside, bside)
@@ -264,6 +270,7 @@ def main():
     joyInputs()
     collDetect()
     wvOutputs()
+    references()
     p_relay = rospy.Publisher('relay_controll', Int8MultiArray, queue_size=10)
     p_data = Int8MultiArray()
     p_joy = rospy.Publisher('joy', Joy, queue_size=10)
@@ -318,7 +325,7 @@ def main():
 		    while len(joy_data.buttons) < 11:
 			joy_data.buttons.append(0)
 
-		    joy_data.axes[0] = steering_reference
+		    joy_data.axes[0] = steering_data
 		    
 		    joy_data.axes[2] = speed1  
     		    joy_data.axes[5] = speed2
