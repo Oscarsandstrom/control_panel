@@ -34,7 +34,7 @@ emergency_prev = False
 handBreak_state = True
 handBreak_prev = False
 
-beacon_state = False
+beacon_state = True
 beacon_prev = False
 
 
@@ -218,7 +218,7 @@ def drawBoxes(s, collision, emergency):
     pygame.draw.rect(s, color, pos, 2)
 
     #Beacon box
-    if beacon_state:
+    if not beacon_state:
 	pos = (smargin + 3 * bmargin, tmargin, bside, bside)
 	pygame.draw.rect(s, beacon_color, pos, 0)
 
@@ -271,7 +271,7 @@ def main():
     collDetect()
     wvOutputs()
     references()
-    p_relay = rospy.Publisher('relay_controll', Int8MultiArray, queue_size=5)
+    p_relay = rospy.Publisher('controll_panel', Int8MultiArray, queue_size=5)
     p_data = Int8MultiArray()
     p_joy = rospy.Publisher('joy', Joy, queue_size=5)
     joy_data = Joy()
