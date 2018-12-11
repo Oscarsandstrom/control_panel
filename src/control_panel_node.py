@@ -28,7 +28,7 @@ permo_steering = 0
 coll_detect = False
 coll_override = 0
 
-emergency_state = False
+emergency_state = True
 emergency_prev = False
 
 handBreak_state = True
@@ -145,6 +145,12 @@ def drawMeters(s, speed_reference, steering_reference, permo_speed, permo_steeri
     rx = WIDTH - (2 * rw + 2 * (rgap - rw))
     ry = (HEIGHT - rh)/2
 
+    pos = (rx + 1 * rgap - 5, (ry - rw + rh/2), rw + 10, 10)
+    pygame.draw.rect(s, color, pos, 0)
+
+    pos = (rx - 1 * rh/3 + 16 + rh/2,  ry + rh - 5, 10, rw + 10)
+    pygame.draw.rect(s, color, pos, 0)
+
 
     if permo_speed != 0:
         pos = (rx + 1 * rgap + 1, ry - rw + rh/2, rw - 2, (rh/2) * (-permo_speed / 1.2))
@@ -154,13 +160,12 @@ def drawMeters(s, speed_reference, steering_reference, permo_speed, permo_steeri
         pos2 = (rx - 1 * rh/3 + 16 + rh/2,  ry + rh, (rh/2) * (-permo_steering / 8.4), rw - 2)
         pygame.draw.rect(s, wv_color, pos2, 0)
 
-    if steering_reference != 0:
-	pos2 = ((rx - 1 * rh/3 + 16 + rh/2) + rh/2 * (-steering_reference / 8.4), ry + rh, 10, rw - 2)
-	pygame.draw.rect(s, steering_color, pos2, 0)
+
+    pos2 = ((rx - 1 * rh/3 + 16 + rh/2) + rh/2 * (-steering_reference / 8.4), ry + rh, 10, rw - 2)
+    pygame.draw.rect(s, steering_color, pos2, 0)
     
-    if speed_reference != 0:
-        pos = (rx + 1 * rgap + 1, (ry - rw + rh/2) + rh/2 * (-speed_reference / 1.2), rw - 2, 10)
-        pygame.draw.rect(s, speed_color, pos, 0)
+    pos = (rx + 1 * rgap + 1, (ry - rw + rh/2) + rh/2 * (-speed_reference / 1.2), rw - 2, 10)
+    pygame.draw.rect(s, speed_color, pos, 0)
 
 
     pos = (rx + 1 * rgap, ry - rw, rw, rh + 12)
@@ -202,7 +207,7 @@ def drawBoxes(s, collision, emergency):
     pygame.draw.rect(s, color, pos, 2)
 
     #Emergency break box
-    if emergency_state:
+    if not emergency_state:
 	pos = (smargin + bmargin, tmargin, bside, bside)
 	pygame.draw.rect(s, stop_color, pos, 0)
 
@@ -236,6 +241,13 @@ def buttonText():
     mboxy = 175
     mboxx = 325
     dist = 170
+
+    rh = 500
+    rw = 150
+    rgap = 200
+
+    rx = WIDTH - (2 * rw + 2 * (rgap - rw))
+    ry = (HEIGHT - rh)/2
     
     font_text = pygame.font.Font('freesansbold.ttf',25)
 
@@ -258,6 +270,18 @@ def buttonText():
     textet, text_box = text_objects('Beacon', font_text)
     text_box.center = (mboxx + 3 * dist, mboxy)
     s.blit(textet, text_box)
+
+
+    textet, text_box = text_objects('Velocity: '+ '%0.2f' % permo_speed + ' m/s', font_text)
+    text_box.center = (rx + 1 * rgap - 120,  ry - rw + rh/2 + 5)
+    s.blit(textet, text_box)
+
+    textet, text_box = text_objects('Ang. velocity: '+ '%0.2f' % permo_steering + ' rad/s', font_text)
+    text_box.center = (rx - 1 * rh/3 + 16 + rh/2, ry + rh - 30)
+    s.blit(textet, text_box)
+
+
+    
 
 def main():
     global emergency_state
