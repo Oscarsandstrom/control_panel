@@ -150,8 +150,7 @@ def drawMeters(s, speed_reference, steering_reference, permo_speed, permo_steeri
 
     pos = (rx - 1 * rh/3 + 16 + rh/2,  ry + rh - 5, 10, rw + 10)
     pygame.draw.rect(s, color, pos, 0)
-
-
+	
     if permo_speed != 0:
         pos = (rx + 1 * rgap + 1, ry - rw + rh/2, rw - 2, (rh/2) * (-permo_speed / 1.2))
         pygame.draw.rect(s, wv_color, pos, 0)
@@ -161,10 +160,10 @@ def drawMeters(s, speed_reference, steering_reference, permo_speed, permo_steeri
         pygame.draw.rect(s, wv_color, pos2, 0)
 
 
-    pos2 = ((rx - 1 * rh/3 + 16 + rh/2) + rh/2 * (-steering_reference / 8.4), ry + rh, 10, rw - 2)
+    pos2 = ((rx - 1 * rh/3 + 16 + rh/2) + rh/2 * (-steering_reference / 1), ry + rh, 10, rw - 2)
     pygame.draw.rect(s, steering_color, pos2, 0)
     
-    pos = (rx + 1 * rgap + 1, (ry - rw + rh/2) + rh/2 * (-speed_reference / 1.2), rw - 2, 10)
+    pos = (rx + 1 * rgap + 1, (ry - rw + rh/2) + rh/2 * (-speed_reference / 1), rw - 2, 10)
     pygame.draw.rect(s, speed_color, pos, 0)
 
 
